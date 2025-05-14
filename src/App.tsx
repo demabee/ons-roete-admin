@@ -9,6 +9,7 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Layout, Menu, notification, theme } from "antd";
 import "antd/dist/reset.css";
 import "./App.css";
@@ -17,15 +18,12 @@ import Login from "./pages/Login";
 import { auth } from "./firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 import {
-  PhoneOutlined,
+  LogoutOutlined,
   ProjectOutlined,
-  SettingOutlined,
 } from "@ant-design/icons";
 import {
-  MdCategory,
   MdShop,
 } from "react-icons/md";
-import Requests from "./pages/Requests";
 import Maps from "./pages/Maps";
 import Nodes from "./pages/Nodes";
 
@@ -41,6 +39,7 @@ function App() {
   } = theme.useToken();
 
   function PrivateRoute() {
+    const navigate = useNavigate();
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
 
@@ -74,8 +73,17 @@ function App() {
             <Menu.Item key="/maps" icon={<ProjectOutlined />}>
               <NavLink to="/maps">Map</NavLink>
             </Menu.Item>
-            <Menu.Item key="/requests" icon={<PhoneOutlined />}>
-              <NavLink to="/requests">Requests</NavLink>
+            <Menu.Item icon={<LogoutOutlined />}>
+              <a
+                onClick={async (e) => {
+                  await localStorage.removeItem("auth-token");
+                  navigate("/");
+                }}
+                rel="noopener noreferrer"
+                href="#"
+              >
+                Logout
+              </a>
             </Menu.Item>
           </Menu>
         </Sider>
@@ -117,7 +125,6 @@ function App() {
           <Route path="/" element={<Nodes />} />
           <Route path="/nodes" element={<Nodes />} />
           <Route path="/maps" element={<Maps />} />
-          <Route path="/requests" element={<Requests />} />
         </Route>
       </Routes>
     </Router>
