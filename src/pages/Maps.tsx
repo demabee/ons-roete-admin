@@ -2,21 +2,17 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Button,
   message,
-  Divider,
   Row,
   Col,
-  Popconfirm,
   Spin,
   Space,
   Input,
   Avatar,
 } from "antd";
 import { v4 as uuidv4 } from "uuid";
-import { PlusOutlined } from "@ant-design/icons";
 import DataTable from "react-data-table-component";
 import {
   Timestamp,
-  deleteDoc,
   doc,
   serverTimestamp,
   setDoc,
@@ -48,7 +44,6 @@ const Maps: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currProject, setCurrProject] = useState<Map | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [processedFiles, setProcessedFiles] = useState<any[]>([]);
   const [form] = useForm();
@@ -148,7 +143,6 @@ const Maps: React.FC = () => {
             style={{
               fontSize: 12,
             }}
-            loading={isLoading}
             onClick={() => {
               setCurrProject(row);
               showModal(row);
@@ -156,55 +150,6 @@ const Maps: React.FC = () => {
           >
             Edit
           </Button>
-          <Divider type="vertical" />
-          <Button
-            type="default"
-            size="small"
-            loading={isLoading}
-            style={{
-              width: 130,
-              backgroundColor: row?.hideFromList ? "white" : "gray",
-              color: row?.hideFromList ? "#001529" : "white",
-              fontSize: 12,
-            }}
-            onClick={async () => {
-              setIsLoading(true);
-              await setDoc(
-                doc(db, "maps", row?.id),
-                {
-                  hideFromList: !row?.hideFromList,
-                },
-                { merge: true }
-              );
-              await fetchProjects();
-              setIsLoading(false);
-            }}
-          >
-            {row?.hideFromList ? "Display in List" : "Remove from List"}
-          </Button>
-          <Divider type="vertical" />
-          <Popconfirm
-            title="Are you sure to delete this Map?"
-            onConfirm={() => {
-              handleDelete(row?.id);
-            }}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              size="small"
-              style={{
-                backgroundColor: "#a41111",
-                borderColor: "#a41111",
-                color: "#fff",
-                fontSize: 12,
-              }}
-              loading={isLoading}
-              type="default"
-            >
-              Delete
-            </Button>
-          </Popconfirm>
         </>
       ),
     },
@@ -264,19 +209,6 @@ const Maps: React.FC = () => {
     }
   };
 
-  const handleDelete = async (projectId: any) => {
-    try {
-      setLoading(true);
-      await deleteDoc(doc(db, "maps", projectId));
-      message.success("Map deleted successfully");
-      await fetchProjects();
-    } catch (error) {
-      message.error((error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleUpdate = async (Map: any) => {
     try {
       setLoading(true);
@@ -312,16 +244,6 @@ const Maps: React.FC = () => {
               onSearch={(value: string) => setSearchTerm(value)}
               style={{ width: 200 }}
             />
-            <Button
-              type="primary"
-              onClick={() => {
-                setCurrProject(null);
-                showModal();
-              }}
-              icon={<PlusOutlined />}
-            >
-              New Map
-            </Button>
           </Space>
         </Col>
       </Row>
