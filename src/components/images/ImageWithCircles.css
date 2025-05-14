@@ -1,0 +1,37 @@
+.image-container {
+  position: relative;
+  width: 100%; /* Adjust as needed */
+}
+
+.circle-overlay {
+  position: absolute;
+  top: 50%; /* Adjust the top position based on your coordinates */
+  left: 50%; /* Adjust the left position based on your coordinates */
+  transform: translate(-50%, -50%);
+  width: 36px; /* Adjust as needed */
+  height: 36px; /* Adjust as needed */
+  border-radius: 50%;
+  background-color: #ffffff75;
+  border: 12px solid #1e2d4680; /* Adjust color and thickness as needed */
+  box-shadow: 0px 0px 4px 2px #1e2d4680;
+  transition: background-color 0.3s;
+}
+
+.circle-overlay:hover {
+  background-color: #000000a0; /* Adjust the color for the hover effect */
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #1e2d4680;
+  color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  display: none;
+  pointer-events: none;
+}
+
+.image-container:hover .tooltip {
+  display: block;
+}

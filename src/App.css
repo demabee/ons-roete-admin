@@ -1,0 +1,131 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.login-form {
+  padding-top: 2rem;
+  width: 275px;
+}
+
+.site-layout-content {
+  min-height: 89vh;
+  padding: 24px;
+}
+
+.layout {
+  min-height: 100vh;
+}
+
+.main-bg-color {
+  background-color: #1e2d46;
+}
+
+.main-bg-color {
+  color: #1e2d46;
+}
+
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #1e2d46;
+}
+
+#components-layout-demo-top .logo {
+  float: left;
+  width: 120px;
+  height: 31px;
+  margin: 16px 24px 16px 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ant-row-rtl #components-layout-demo-top .logo {
+  float: right;
+  margin: 16px 0 16px 24px;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: #fff;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  color: #00152a;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.spinner {
+  text-align: center;
+  width: 100%;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* common */
+.align-right {
+  text-align: -webkit-right;
+}
+
+.ant-btn-primary {
+  background-color: #005cb9;
+}
+
+.chatbox {
+  min-width: 350;
+  max-width: 45vw;
+  padding: 5px 10px;
+  border-radius: 15px;
+}
+
+.chat .ant-list {
+  max-height: 66vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.chat .ant-list .ant-list-items {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.chat-list aside {
+  background-color: white;
+}
+
+.message-list {
+  padding: 10px;
+}
