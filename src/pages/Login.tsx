@@ -77,7 +77,7 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      <img src="./banqa-logo.png" width={300} alt="logo" />
+      <img src="./ons-logo.png" width={300} alt="logo" />
       <Form
         name="normal_login"
         className="login-form"

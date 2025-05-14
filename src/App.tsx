@@ -26,8 +26,6 @@ import {
   MdShop,
 } from "react-icons/md";
 import Requests from "./pages/Requests";
-import Categories from "./pages/Categories";
-import FilesAndLinks from "./pages/FilesAndLinks/FilesAndLinks";
 import Maps from "./pages/Maps";
 import Nodes from "./pages/Nodes";
 
@@ -63,7 +61,6 @@ function App() {
               textAlign: "center",
             }}
           >
-            {/* <img src={"./banqa-logo-only.png"} width="70%" alt="logo" /> */}
             <img src={"./ons-logo.png"} width="97%" alt="logo" />
           </div>
           <Menu
@@ -79,12 +76,6 @@ function App() {
             </Menu.Item>
             <Menu.Item key="/requests" icon={<PhoneOutlined />}>
               <NavLink to="/requests">Requests</NavLink>
-            </Menu.Item>
-            <Menu.Item key="/categories" icon={<MdCategory />}>
-              <NavLink to="/categories">Categories</NavLink>
-            </Menu.Item>
-            <Menu.Item key="/files" icon={<SettingOutlined />}>
-              <NavLink to="/files">Settings & Files</NavLink>
             </Menu.Item>
           </Menu>
         </Sider>
@@ -127,8 +118,6 @@ function App() {
           <Route path="/nodes" element={<Nodes />} />
           <Route path="/maps" element={<Maps />} />
           <Route path="/requests" element={<Requests />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/files" element={<FilesAndLinks />} />
         </Route>
       </Routes>
     </Router>

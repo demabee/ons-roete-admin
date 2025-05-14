@@ -116,7 +116,7 @@ export const CommentCard: React.FC<{
         ) : (
           <img
             style={{ marginTop: 27, borderRadius: 16, background: "#000" }}
-            src="./banqa-logo-only.png"
+            src="./ons-logo.png"
             width={32}
             alt="logo"
           />
