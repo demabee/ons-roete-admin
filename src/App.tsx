@@ -22,10 +22,14 @@ import {
   ProjectOutlined,
 } from "@ant-design/icons";
 import {
+  MdPhotoLibrary,
+  MdPlace,
   MdShop,
 } from "react-icons/md";
 import Maps from "./pages/Maps";
 import Nodes from "./pages/Nodes";
+import Gallery from './pages/Gallery';
+import Destination from './pages/Destination';
 
 const { Content, Footer, Sider } = Layout;
 
@@ -70,6 +74,12 @@ function App() {
             <Menu.Item key="/nodes" icon={<MdShop />}>
               <NavLink to="/nodes">Nodes</NavLink>
             </Menu.Item>
+            <Menu.Item key="/gallery" icon={<MdPhotoLibrary />}>
+              <NavLink to="/gallery">Gallery</NavLink>
+            </Menu.Item>
+            <Menu.Item key="/destination" icon={<MdPlace />}>
+              <NavLink to="/destination">Destination</NavLink>
+            </Menu.Item>
             <Menu.Item key="/maps" icon={<ProjectOutlined />}>
               <NavLink to="/maps">Map</NavLink>
             </Menu.Item>
@@ -96,7 +106,7 @@ function App() {
               <Outlet />
             </div>
           </Content>
-          <Footer style={{ textAlign: "center" }}>BANQA Admin ©2024</Footer>
+          <Footer style={{ textAlign: "center" }}>Ons Roete Admin ©{new Date().getFullYear()}</Footer>
         </Layout>
       </Layout>
     ) : (
@@ -124,6 +134,8 @@ function App() {
         <Route path="/" element={<PrivateRoute />}>
           <Route path="/" element={<Nodes />} />
           <Route path="/nodes" element={<Nodes />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/destination" element={<Destination />} />
           <Route path="/maps" element={<Maps />} />
         </Route>
       </Routes>

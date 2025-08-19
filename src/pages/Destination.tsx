@@ -14,53 +14,41 @@ import {
 import { PlusOutlined } from "@ant-design/icons";
 import DataTable from "react-data-table-component";
 import {
-  Timestamp,
   deleteDoc,
   doc,
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
-// import { v4 as uuidv4 } from 'uuid';
 import dayjs from "dayjs";
-// import { getAuth } from 'firebase/auth';
 import { useForm } from "antd/es/form/Form";
-import { ProductForm } from "./Node/ProductForm";
 import { v4 as uuidv4 } from "uuid";
-import useNodes from '../hooks/useNodes';
+import { DestinationForm } from '../components/forms/DestinationForm';
+import useDestination from '../hooks/useDestination';
+import { DestinationType } from '../types/Destination';
 
 const { Search } = Input;
-interface Node {
-  id: string;
-  name: string;
-  description?: string;
-  subtitle?: string;
-  dateCreated?: Timestamp;
-  thumb?: string;
-  images?: string[];
-  medium?: string;
-  highres?: string;
-}
-const Nodes: React.FC = () => {
+
+const Destination: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currProduct, setCurrProduct] = useState<Node | null>(null);
+  const [currDestination, setCurrDestination] = useState<DestinationType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [processedFiles, setProcessedFiles] = useState<any[]>([]);
   const [form] = useForm();
   const {
-    data: nodes,
-    getAll: fetchAllNodes,
-    loading: loadingProducts,
-  } = useNodes();
+    data: destination,
+    getAll: getAllDestination,
+    loading: loadingDestination
+  } = useDestination();
 
-  const filteredProducts = useMemo(() => {
-    const tempProducts = nodes;
+  const filteredDestination = useMemo(() => {
+    const tempGallery = destination;
     return !searchTerm
-      ? tempProducts ?? []
-      : (tempProducts ?? []).filter(
-        (item: any) => {
+      ? tempGallery ?? []
+      : (tempGallery ?? []).filter(
+        (item: DestinationType) => {
           const titleMatch = (item?.title || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
@@ -70,58 +58,34 @@ const Nodes: React.FC = () => {
           return titleMatch || descriptionMatch;
         }
       );
-  }, [searchTerm, nodes]);
+  }, [searchTerm, destination]);
 
   const columns: any[] = [
     {
       name: "Image",
-      dataIndex: "url",
-      sortable: true,
-      key: "url",
-      selector: (row: { url: string; thumb?: string }) =>
-        row?.thumb ? <Avatar src={row?.thumb} size={40} shape="square" /> : "-",
+      selector: (row: DestinationType) =>
+        row?.thumb ? <Avatar src={row.thumb} size={40} shape="square" /> : "-",
+      sortable: false,
+      width: "80px",
     },
     {
       name: "Title",
-      width: "20%",
-      dataIndex: "name",
+      selector: (row: DestinationType) => row?.title || "-",
       sortable: true,
-      key: "name",
-      selector: (row: { name: string; }) =>
-        row?.name || "-",
+      grow: 1,
     },
     {
-      name: "Subtitle",
-      width: "20%",
-      dataIndex: "subtitle",
-      sortable: true,
-      key: "subtitle",
-      selector: (row: { subtitle: string; }) =>
-        row?.subtitle || "-",
-    },
-    {
-      name: "Description",
-      dataIndex: "description",
-      sortable: true,
-      key: "description",
-      selector: (row: { description: string; }) =>
-        row?.description || "-",
-    },
-    {
-      name: "Date created",
-      dataIndex: "dateCreated",
-      sortable: true,
-      key: "dateCreated",
-      selector: (row: { dateCreated: Timestamp }) =>
+      name: "Date Created",
+      selector: (row: DestinationType) =>
         row?.dateCreated
-          ? dayjs(row?.dateCreated?.toDate()).format("YYYY-MM-DD hh:mm a")
-          : dayjs().format("YYYY-MM-DD hh:mm a"),
+          ? dayjs(row.dateCreated.toDate()).format("YYYY-MM-DD hh:mm a")
+          : "-",
+      sortable: true,
+      grow: 1,
     },
     {
       name: "Actions",
-      width: "25%",
-      key: "action",
-      cell: (row: any, record: Node) => (
+      cell: (row: DestinationType) => (
         <>
           <Button
             size="small"
@@ -131,7 +95,6 @@ const Nodes: React.FC = () => {
             }}
             loading={isLoading}
             onClick={() => {
-              setCurrProduct(row);
               showModal(row);
             }}
           >
@@ -157,7 +120,6 @@ const Nodes: React.FC = () => {
                 },
                 { merge: true }
               );
-              await fetchAllNodes();
               setIsLoading(false);
             }}
           >
@@ -188,18 +150,22 @@ const Nodes: React.FC = () => {
           </Popconfirm>
         </>
       ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
   ];
+  ;
 
   useEffect(() => {
-    fetchAllNodes();
-  }, [fetchAllNodes]);
+    getAllDestination();
+  }, [getAllDestination]);
 
   useEffect(() => {
-    if (currProduct?.images) {
-      setProcessedFiles(currProduct?.images);
+    if (currDestination?.images) {
+      setProcessedFiles(currDestination?.images);
     }
-  }, [currProduct?.images]);
+  }, [currDestination?.images]);
 
   const showModal = (node?: any) => {
     if (node) {
@@ -215,27 +181,16 @@ const Nodes: React.FC = () => {
     setVisible(false);
   };
 
-  const handleCreate = async (node: Node) => {
+  const handleCreate = async (data: DestinationType) => {
     try {
       setLoading(true);
-      await setDoc(doc(db, "nodes", node.id), {
-        ...node,
-        hideFromList: false,
-        featured: false,
+      await setDoc(doc(db, "destination", data.id), {
+        ...data,
         dateCreated: serverTimestamp(),
       });
-      message.success("Node created successfully");
+      message.success("Image info created successfully");
       setVisible(false);
-      // if (!auth?.currentUser) return;
-      // await setDoc(doc(db, 'audit', uuidv4()), {
-      //   email: auth.currentUser.email,
-      //   user: doc(db, 'students', auth.currentUser.uid),
-      //   type: `Update node ${node.title}`,
-      //   userId: auth.currentUser.uid,
-      //   userType: 'admins',
-      //   timestamp: serverTimestamp(),
-      // });
-      await fetchAllNodes();
+      await getAllDestination();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -246,9 +201,9 @@ const Nodes: React.FC = () => {
   const handleDelete = async (nodeId: any) => {
     try {
       setLoading(true);
-      await deleteDoc(doc(db, "nodes", nodeId));
-      message.success("Node deleted successfully");
-      await fetchAllNodes();
+      await deleteDoc(doc(db, "destination", nodeId));
+      message.success("Destination deleted successfully");
+      await getAllDestination();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -256,22 +211,22 @@ const Nodes: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (node: any) => {
+  const handleUpdate = async (data: any) => {
     try {
       setLoading(true);
       const pload = {
-        ...node,
+        ...data,
       };
       await setDoc(
-        doc(db, "nodes", currProduct?.id ?? node.id),
+        doc(db, "destination", currDestination?.id ?? data.id),
         {
           ...pload,
         },
         { merge: true }
       );
-      message.success("Node updated successfully");
+      message.success("Image info updated successfully");
       setVisible(false);
-      await fetchAllNodes();
+      await getAllDestination();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -292,26 +247,25 @@ const Nodes: React.FC = () => {
             <Button
               type="primary"
               onClick={() => {
-                setCurrProduct(null);
-                setProcessedFiles([]);
+                setCurrDestination(null);
                 showModal();
               }}
               icon={<PlusOutlined />}
             >
-              New Node
+              New Destination
             </Button>
           </Space>
         </Col>
       </Row>
       <Row>
         <Col span={24}>
-          {loadingProducts ? (
+          {loadingDestination ? (
             <Spin size="large" className="spinner" />
           ) : (
             <DataTable
-              title="Nodes"
+              title="Destination"
               columns={columns}
-              data={filteredProducts}
+              data={filteredDestination}
               progressPending={loading}
               noHeader
               pagination
@@ -319,23 +273,19 @@ const Nodes: React.FC = () => {
           )}
         </Col>
       </Row>
-      <ProductForm
+      <DestinationForm
         form={form}
         visible={visible}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
         onCancel={handleCancel}
-        defaultImages={[
-          currProduct?.thumb ?? "",
-          currProduct?.medium ?? "",
-          currProduct?.highres ?? "",
-        ]}
+        defaultImages={currDestination?.url}
         currImages={processedFiles}
-        isNew={!currProduct?.id}
-        nodeId={currProduct?.id ?? uuidv4()}
+        isNew={!currDestination?.id}
+        destinationId={currDestination?.id ?? uuidv4()}
       />
     </>
   );
 };
 
-export default Nodes;
+export default Destination;

@@ -60,3 +60,13 @@ export const LIKES = [
   'dansen',
   'watersporten',
 ];
+
+export const META_INFO_OPTIONS = [
+  { label: 'accommodatie', value: 'accommodatie' },
+  { label: 'activiteiten', value: 'activiteiten' },
+  { label: 'culinair', value: 'culinair' },
+  { label: 'historie', value: 'historie' },
+  { label: '3 dagen', value: '3 dagen' },
+  { label: '2 dagen', value: '2 dagen' },
+  { label: '1 dagen', value: '1 dagen' },
+]

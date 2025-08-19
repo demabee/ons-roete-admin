@@ -234,6 +234,7 @@ export const ProductForm: React.FC<EventFormProps> = ({
           })
           .finally(() => {
             setLoading(false);
+            setFileList([]);
           });
       }}
     >
@@ -259,14 +260,6 @@ export const ProductForm: React.FC<EventFormProps> = ({
               alignItems: "center",
             }}
           >
-            {/* {urls && urls[0] && (
-              <img src={urls[0]} alt="node" style={{ width: "80px" }} />
-            )} */}
-            {/* {urls && urls[0] && (
-              <Button type="link" danger onClick={handleImageRemove}>
-                Remove Image
-              </Button>
-            )} */}
           </div>
           <Upload
             accept=".jpg,.jpeg,.png,.gif"
@@ -302,7 +295,7 @@ export const ProductForm: React.FC<EventFormProps> = ({
               return false;
             }}
             listType="picture-circle"
-            // beforeUpload={() => false}
+          // beforeUpload={() => false}
           >
             <Button
               size="small"
@@ -336,6 +329,15 @@ export const ProductForm: React.FC<EventFormProps> = ({
           label="Description"
           rules={[
             { required: true, message: "Please enter Description" },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="url"
+          label="URL Endpoint"
+          rules={[
+            { required: true, message: "Please enter URL Endpoint" },
           ]}
         >
           <Input />

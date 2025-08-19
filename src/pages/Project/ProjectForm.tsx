@@ -14,11 +14,11 @@ import {
 import { PlusOutlined } from "@ant-design/icons";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "../../firebase/config";
-import useGetAllProducts from "../../hooks/users/useGetAllProducts";
 import ImageWithCircles from "../../components/images/ImageCoordinates";
 import {
   extractFileNameFromUrl,
 } from "../../helpers/common";
+import useNodes from '../../hooks/useNodes';
 
 interface EventFormProps {
   form: any;
@@ -68,13 +68,13 @@ export const ProjectForm: React.FC<EventFormProps> = ({
   >([]);
   const {
     data: nodesData,
-    fetchData: fetchAllProducts,
+    getAll: fetchAllNodes,
     loading: isFetchingAllProducts,
-  } = useGetAllProducts();
+  } = useNodes();
 
   useEffect(() => {
-    fetchAllProducts();
-  }, [fetchAllProducts]);
+    fetchAllNodes();
+  }, [fetchAllNodes]);
 
   useEffect(() => {
     if (defCircles) {
@@ -83,7 +83,7 @@ export const ProjectForm: React.FC<EventFormProps> = ({
     }
   }, [defCircles]);
 
-  useEffect(() => {}, [circles]);
+  useEffect(() => { }, [circles]);
 
   useEffect(() => {
     if (defaultImage) {
@@ -310,9 +310,8 @@ export const ProjectForm: React.FC<EventFormProps> = ({
           <Form.Item name="nodes" label="Nodes">
             <Modal
               open={visibleMap}
-              title={`Map ${
-                currProduct?.name || currProduct?.technicalDescription
-              }`}
+              title={`Map ${currProduct?.name || currProduct?.technicalDescription
+                }`}
               okText="Update"
               confirmLoading={loading}
               okButtonProps={{
@@ -354,8 +353,6 @@ export const ProjectForm: React.FC<EventFormProps> = ({
             </Modal>
             <Select
               showSearch
-              // disabled={!!id || currProduct?.issuedTo?.userId}
-              // value={currProduct?.issuedTo?.userId ?? id}
               style={{ width: "100%" }}
               value={nodes}
               disabled={!url}
@@ -380,9 +377,6 @@ export const ProjectForm: React.FC<EventFormProps> = ({
                 !url ? "Upload Image to add nodes." : "Select nodes"
               }
               optionFilterProp="children"
-              // onChange={(e) => {
-              //   console.log(e);
-              // }}
               onSearch={() => console.log("searched")}
               filterOption={(input: string, option: any) => {
                 return (option?.key ?? "")

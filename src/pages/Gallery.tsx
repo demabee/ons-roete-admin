@@ -21,46 +21,35 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
-// import { v4 as uuidv4 } from 'uuid';
 import dayjs from "dayjs";
-// import { getAuth } from 'firebase/auth';
 import { useForm } from "antd/es/form/Form";
-import { ProductForm } from "./Node/ProductForm";
 import { v4 as uuidv4 } from "uuid";
-import useNodes from '../hooks/useNodes';
+import { GalleryForm } from '../components/forms/GalleryForm';
+import { GalleryType } from '../types/Gallery';
+import useGallery from '../hooks/useGallery';
 
 const { Search } = Input;
-interface Node {
-  id: string;
-  name: string;
-  description?: string;
-  subtitle?: string;
-  dateCreated?: Timestamp;
-  thumb?: string;
-  images?: string[];
-  medium?: string;
-  highres?: string;
-}
-const Nodes: React.FC = () => {
+
+const Gallery: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currProduct, setCurrProduct] = useState<Node | null>(null);
+  const [currGallery, setCurrGallery] = useState<GalleryType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [processedFiles, setProcessedFiles] = useState<any[]>([]);
   const [form] = useForm();
   const {
-    data: nodes,
-    getAll: fetchAllNodes,
-    loading: loadingProducts,
-  } = useNodes();
+    data: gallery,
+    getAll: getAllGallery,
+    loading: loadingGallery
+  } = useGallery();
 
   const filteredProducts = useMemo(() => {
-    const tempProducts = nodes;
+    const tempGallery = gallery;
     return !searchTerm
-      ? tempProducts ?? []
-      : (tempProducts ?? []).filter(
-        (item: any) => {
+      ? tempGallery ?? []
+      : (tempGallery ?? []).filter(
+        (item: GalleryType) => {
           const titleMatch = (item?.title || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
@@ -70,7 +59,7 @@ const Nodes: React.FC = () => {
           return titleMatch || descriptionMatch;
         }
       );
-  }, [searchTerm, nodes]);
+  }, [searchTerm, gallery]);
 
   const columns: any[] = [
     {
@@ -79,7 +68,7 @@ const Nodes: React.FC = () => {
       sortable: true,
       key: "url",
       selector: (row: { url: string; thumb?: string }) =>
-        row?.thumb ? <Avatar src={row?.thumb} size={40} shape="square" /> : "-",
+        row?.url ? <Avatar src={row?.url} size={40} shape="square" /> : "-",
     },
     {
       name: "Title",
@@ -87,17 +76,8 @@ const Nodes: React.FC = () => {
       dataIndex: "name",
       sortable: true,
       key: "name",
-      selector: (row: { name: string; }) =>
-        row?.name || "-",
-    },
-    {
-      name: "Subtitle",
-      width: "20%",
-      dataIndex: "subtitle",
-      sortable: true,
-      key: "subtitle",
-      selector: (row: { subtitle: string; }) =>
-        row?.subtitle || "-",
+      selector: (row: { title: string; }) =>
+        row?.title || "-",
     },
     {
       name: "Description",
@@ -121,7 +101,7 @@ const Nodes: React.FC = () => {
       name: "Actions",
       width: "25%",
       key: "action",
-      cell: (row: any, record: Node) => (
+      cell: (row: any, record: GalleryType) => (
         <>
           <Button
             size="small"
@@ -131,7 +111,7 @@ const Nodes: React.FC = () => {
             }}
             loading={isLoading}
             onClick={() => {
-              setCurrProduct(row);
+              setCurrGallery(row);
               showModal(row);
             }}
           >
@@ -157,7 +137,7 @@ const Nodes: React.FC = () => {
                 },
                 { merge: true }
               );
-              await fetchAllNodes();
+              await getAllGallery();
               setIsLoading(false);
             }}
           >
@@ -192,14 +172,14 @@ const Nodes: React.FC = () => {
   ];
 
   useEffect(() => {
-    fetchAllNodes();
-  }, [fetchAllNodes]);
+    getAllGallery();
+  }, [getAllGallery]);
 
   useEffect(() => {
-    if (currProduct?.images) {
-      setProcessedFiles(currProduct?.images);
+    if (currGallery?.images) {
+      setProcessedFiles(currGallery?.images);
     }
-  }, [currProduct?.images]);
+  }, [currGallery?.images]);
 
   const showModal = (node?: any) => {
     if (node) {
@@ -215,27 +195,16 @@ const Nodes: React.FC = () => {
     setVisible(false);
   };
 
-  const handleCreate = async (node: Node) => {
+  const handleCreate = async (data: GalleryType) => {
     try {
       setLoading(true);
-      await setDoc(doc(db, "nodes", node.id), {
-        ...node,
-        hideFromList: false,
-        featured: false,
+      await setDoc(doc(db, "gallery", data.id), {
+        ...data,
         dateCreated: serverTimestamp(),
       });
-      message.success("Node created successfully");
+      message.success("Image info created successfully");
       setVisible(false);
-      // if (!auth?.currentUser) return;
-      // await setDoc(doc(db, 'audit', uuidv4()), {
-      //   email: auth.currentUser.email,
-      //   user: doc(db, 'students', auth.currentUser.uid),
-      //   type: `Update node ${node.title}`,
-      //   userId: auth.currentUser.uid,
-      //   userType: 'admins',
-      //   timestamp: serverTimestamp(),
-      // });
-      await fetchAllNodes();
+      await getAllGallery();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -248,7 +217,7 @@ const Nodes: React.FC = () => {
       setLoading(true);
       await deleteDoc(doc(db, "nodes", nodeId));
       message.success("Node deleted successfully");
-      await fetchAllNodes();
+      await getAllGallery();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -256,22 +225,22 @@ const Nodes: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (node: any) => {
+  const handleUpdate = async (data: any) => {
     try {
       setLoading(true);
       const pload = {
-        ...node,
+        ...data,
       };
       await setDoc(
-        doc(db, "nodes", currProduct?.id ?? node.id),
+        doc(db, "gallery", currGallery?.id ?? data.id),
         {
           ...pload,
         },
         { merge: true }
       );
-      message.success("Node updated successfully");
+      message.success("Image info updated successfully");
       setVisible(false);
-      await fetchAllNodes();
+      await getAllGallery();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -292,24 +261,23 @@ const Nodes: React.FC = () => {
             <Button
               type="primary"
               onClick={() => {
-                setCurrProduct(null);
-                setProcessedFiles([]);
+                setCurrGallery(null);
                 showModal();
               }}
               icon={<PlusOutlined />}
             >
-              New Node
+              New Gallery
             </Button>
           </Space>
         </Col>
       </Row>
       <Row>
         <Col span={24}>
-          {loadingProducts ? (
+          {loadingGallery ? (
             <Spin size="large" className="spinner" />
           ) : (
             <DataTable
-              title="Nodes"
+              title="Gallery"
               columns={columns}
               data={filteredProducts}
               progressPending={loading}
@@ -319,23 +287,19 @@ const Nodes: React.FC = () => {
           )}
         </Col>
       </Row>
-      <ProductForm
+      <GalleryForm
         form={form}
         visible={visible}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
         onCancel={handleCancel}
-        defaultImages={[
-          currProduct?.thumb ?? "",
-          currProduct?.medium ?? "",
-          currProduct?.highres ?? "",
-        ]}
+        defaultImages={currGallery?.url}
         currImages={processedFiles}
-        isNew={!currProduct?.id}
-        nodeId={currProduct?.id ?? uuidv4()}
+        isNew={!currGallery?.id}
+        galleryId={currGallery?.id ?? uuidv4()}
       />
     </>
   );
 };
 
-export default Nodes;
+export default Gallery;

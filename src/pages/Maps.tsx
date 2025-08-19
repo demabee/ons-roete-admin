@@ -24,6 +24,7 @@ import dayjs from "dayjs";
 import { useForm } from "antd/es/form/Form";
 import { ProjectForm } from "./Project/ProjectForm";
 import useGetProjects from "../hooks/projects/useGetProjects";
+import { PlusOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
 interface Map {
@@ -52,41 +53,31 @@ const Maps: React.FC = () => {
     fetchData: fetchProjects,
     loading: loadingProjects,
   } = useGetProjects();
-  // const {
-  //   data: featuredProject,
-  //   fetchData: fetchFeatured,
-  //   loading: loadingFeatured,
-  // } = useGetFeaturedProject();
-  // const {
-  //   data: featuredProject2,
-  //   fetchData: fetchFeatured2,
-  //   loading: loadingFeatured2,
-  // } = useGetFeatured2Project();
 
   const filteredProjects = useMemo(() => {
     const tempProjects = maps;
     return !searchTerm
       ? tempProjects ?? []
       : (tempProjects ?? []).filter(
-          (item: {
-            name: string;
-            description: string;
-            technicalDescription: string;
-            subtitle: string;
-          }) => {
-            return (
-              (item?.name || "")
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              (item?.description || "")
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-              (item?.subtitle || "")
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-            );
-          }
-        );
+        (item: {
+          name: string;
+          description: string;
+          technicalDescription: string;
+          subtitle: string;
+        }) => {
+          return (
+            (item?.name || "")
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            (item?.description || "")
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            (item?.subtitle || "")
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          );
+        }
+      );
   }, [searchTerm, maps]);
 
   useEffect(() => {
@@ -159,14 +150,6 @@ const Maps: React.FC = () => {
     fetchProjects();
   }, [fetchProjects]);
 
-  // useEffect(() => {
-  //   fetchFeatured();
-  // }, [fetchFeatured]);
-
-  // useEffect(() => {
-  //   fetchFeatured2();
-  // }, [fetchFeatured2]);
-
   const showModal = (Map?: any) => {
     if (Map) {
       const pload = {
@@ -232,8 +215,6 @@ const Maps: React.FC = () => {
     }
   };
 
-  console.log(currProject);
-
   return (
     <>
       <Row>
@@ -244,6 +225,16 @@ const Maps: React.FC = () => {
               onSearch={(value: string) => setSearchTerm(value)}
               style={{ width: 200 }}
             />
+            <Button
+              type="primary"
+              onClick={() => {
+                setVisible(true);
+                // showModal();
+              }}
+              icon={<PlusOutlined />}
+            >
+              New Map
+            </Button>
           </Space>
         </Col>
       </Row>
