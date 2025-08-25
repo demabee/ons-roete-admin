@@ -15,62 +15,55 @@ import { PlusOutlined } from "@ant-design/icons";
 import DataTable from "react-data-table-component";
 import {
   Timestamp,
-  doc,
   serverTimestamp,
-  setDoc,
 } from "firebase/firestore";
-import { db } from "../firebase/config";
 import dayjs from "dayjs";
 import { useForm } from "antd/es/form/Form";
 import { v4 as uuidv4 } from "uuid";
-import { GalleryForm } from '../components/forms/GalleryForm';
-import { GalleryType } from '../types/Gallery';
-import useGallery from '../hooks/useGallery';
+import { InterestType } from '../../types/Interest';
+import useInterest from '../../hooks/useInterest';
+import { InterestForm } from '../forms/InterestForm';
 
 const { Search } = Input;
 
-const Gallery: React.FC = () => {
+const InterestTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currGallery, setCurrGallery] = useState<GalleryType | null>(null);
+  const [currInterest, setCurrInterest] = useState<InterestType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
-  const [processedFiles, setProcessedFiles] = useState<any[]>([]);
+  const [processedFile, setProcessedFile] = useState<string>('');
   const [form] = useForm();
   const {
-    data: gallery,
-    getAll: getAllGallery,
-    create: createGallery,
-    update: updateGallery,
-    remove: deleteGallery,
-    loading: loadingGallery
-  } = useGallery();
+    data: interest,
+    getAll: getAllInterest,
+    create: createInterest,
+    update: updateInterest,
+    remove: deleteInterest,
+    loading: loadingInterest
+  } = useInterest();
 
   const filteredProducts = useMemo(() => {
-    const tempGallery = gallery;
+    const tempGallery = interest;
     return !searchTerm
       ? tempGallery ?? []
       : (tempGallery ?? []).filter(
-        (item: GalleryType) => {
+        (item: InterestType) => {
           const titleMatch = (item?.title || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
-          const descriptionMatch = typeof item?.description === "string"
-            ? item.description.toLowerCase().includes(searchTerm.toLowerCase())
-            : false;
-          return titleMatch || descriptionMatch;
+          return titleMatch;
         }
       );
-  }, [searchTerm, gallery]);
+  }, [searchTerm, interest]);
 
   const columns: any[] = [
     {
       name: "Image",
-      dataIndex: "url",
+      dataIndex: "imageUrl",
       sortable: true,
-      key: "url",
-      selector: (row: { url: string; thumb?: string }) =>
-        row?.url ? <Avatar src={row?.url} size={40} shape="square" /> : "-",
+      key: "imageUrl",
+      selector: (row: { imageUrl: string; thumb?: string }) =>
+        row?.imageUrl ? <Avatar src={row?.imageUrl} size={40} shape="square" /> : "-",
     },
     {
       name: "Title",
@@ -80,14 +73,6 @@ const Gallery: React.FC = () => {
       key: "name",
       selector: (row: { title: string; }) =>
         row?.title || "-",
-    },
-    {
-      name: "Description",
-      dataIndex: "description",
-      sortable: true,
-      key: "description",
-      selector: (row: { description: string; }) =>
-        row?.description || "-",
     },
     {
       name: "Date created",
@@ -103,7 +88,7 @@ const Gallery: React.FC = () => {
       name: "Actions",
       width: "25%",
       key: "action",
-      cell: (row: any, record: GalleryType) => (
+      cell: (row: any, record: InterestType) => (
         <>
           <Button
             size="small"
@@ -111,43 +96,17 @@ const Gallery: React.FC = () => {
             style={{
               fontSize: 12,
             }}
-            loading={isLoading}
+            loading={loadingInterest}
             onClick={() => {
-              setCurrGallery(row);
+              setCurrInterest(row);
               showModal(row);
             }}
           >
             Edit
           </Button>
           <Divider type="vertical" />
-          <Button
-            type="default"
-            size="small"
-            loading={isLoading}
-            style={{
-              width: 130,
-              backgroundColor: row?.hideFromList ? "white" : "gray",
-              color: row?.hideFromList ? "#001529" : "white",
-              fontSize: 12,
-            }}
-            onClick={async () => {
-              setIsLoading(true);
-              await setDoc(
-                doc(db, "nodes", row?.id),
-                {
-                  hideFromList: !row?.hideFromList,
-                },
-                { merge: true }
-              );
-              await getAllGallery();
-              setIsLoading(false);
-            }}
-          >
-            {row?.hideFromList ? "Display in List" : "Remove from List"}
-          </Button>
-          <Divider type="vertical" />
           <Popconfirm
-            title="Are you sure to delete this gallery?"
+            title="Are you sure to delete this interest?"
             onConfirm={() => {
               handleDelete(row?.id);
             }}
@@ -162,7 +121,7 @@ const Gallery: React.FC = () => {
                 color: "#fff",
                 fontSize: 12,
               }}
-              loading={isLoading}
+              loading={loadingInterest}
               type="default"
             >
               Delete
@@ -174,14 +133,14 @@ const Gallery: React.FC = () => {
   ];
 
   useEffect(() => {
-    getAllGallery();
-  }, [getAllGallery]);
+    getAllInterest();
+  }, [getAllInterest]);
 
   useEffect(() => {
-    if (currGallery?.images) {
-      setProcessedFiles(currGallery?.images);
+    if (currInterest?.imageUrl) {
+      setProcessedFile(currInterest?.imageUrl);
     }
-  }, [currGallery?.images]);
+  }, [currInterest?.imageUrl]);
 
   const showModal = (node?: any) => {
     if (node) {
@@ -197,16 +156,16 @@ const Gallery: React.FC = () => {
     setVisible(false);
   };
 
-  const handleCreate = async (data: GalleryType) => {
+  const handleCreate = async (data: InterestType) => {
     try {
       setLoading(true);
-      await createGallery({
+      await createInterest({
         ...data,
         dateCreated: serverTimestamp(),
-      });
-      message.success("Gallery created successfully");
+      })
+      message.success("Interest created successfully");
       setVisible(false);
-      await getAllGallery();
+      await getAllInterest();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -217,9 +176,9 @@ const Gallery: React.FC = () => {
   const handleDelete = async (id: any) => {
     try {
       setLoading(true);
-      await deleteGallery(id);
-      message.success("Gallery deleted successfully");
-      await getAllGallery();
+      await deleteInterest(id);
+      message.success("Interest deleted successfully");
+      await getAllInterest();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -233,17 +192,16 @@ const Gallery: React.FC = () => {
       const pload = {
         ...data,
       };
-      await updateGallery(currGallery?.id ?? data.id, pload);
-      message.success("Gallery updated successfully");
+      await updateInterest(currInterest?.id ?? data.id, pload);
+      message.success("Interest updated successfully");
       setVisible(false);
-      await getAllGallery();
+      await getAllInterest();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <>
       <Row>
@@ -257,19 +215,19 @@ const Gallery: React.FC = () => {
             <Button
               type="primary"
               onClick={() => {
-                setCurrGallery(null);
+                setCurrInterest(null);
                 showModal();
               }}
               icon={<PlusOutlined />}
             >
-              New Gallery
+              New Interest
             </Button>
           </Space>
         </Col>
       </Row>
       <Row>
         <Col span={24}>
-          {loadingGallery ? (
+          {loadingInterest ? (
             <Spin size="large" className="spinner" />
           ) : (
             <DataTable
@@ -283,19 +241,19 @@ const Gallery: React.FC = () => {
           )}
         </Col>
       </Row>
-      <GalleryForm
+      <InterestForm
         form={form}
         visible={visible}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
         onCancel={handleCancel}
-        defaultImages={currGallery?.url}
-        currImages={processedFiles}
-        isNew={!currGallery?.id}
-        galleryId={currGallery?.id ?? uuidv4()}
+        defaultImages={currInterest?.imageUrl}
+        currImage={processedFile}
+        isNew={!currInterest?.id}
+        interestId={currInterest?.id ?? uuidv4()}
       />
     </>
   );
 };
 
-export default Gallery;
+export default InterestTable;

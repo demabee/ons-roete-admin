@@ -9,85 +9,60 @@ import {
   Spin,
   Space,
   Input,
-  Avatar,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import DataTable from "react-data-table-component";
 import {
   Timestamp,
-  doc,
   serverTimestamp,
-  setDoc,
 } from "firebase/firestore";
-import { db } from "../firebase/config";
 import dayjs from "dayjs";
 import { useForm } from "antd/es/form/Form";
 import { v4 as uuidv4 } from "uuid";
-import { GalleryForm } from '../components/forms/GalleryForm';
-import { GalleryType } from '../types/Gallery';
-import useGallery from '../hooks/useGallery';
+import useTestimonials from '../../hooks/useTestimonials';
+import { TestimonialType } from '../../types/Testimonial';
+import { TestimonialForm } from '../forms/TestimonialForm';
 
 const { Search } = Input;
 
-const Gallery: React.FC = () => {
+const TestimonialTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currGallery, setCurrGallery] = useState<GalleryType | null>(null);
+  const [currTestimonial, setCurrTestimonial] = useState<TestimonialType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
-  const [processedFiles, setProcessedFiles] = useState<any[]>([]);
   const [form] = useForm();
   const {
-    data: gallery,
-    getAll: getAllGallery,
-    create: createGallery,
-    update: updateGallery,
-    remove: deleteGallery,
-    loading: loadingGallery
-  } = useGallery();
+    data: testimonial,
+    getAll: getAllTestimonial,
+    create: createTestimonial,
+    update: updateTestimonial,
+    remove: deleteTestimonial,
+    loading: loadingTestimonial
+  } = useTestimonials();
 
-  const filteredProducts = useMemo(() => {
-    const tempGallery = gallery;
+  const filteredTestimonials = useMemo(() => {
+    const tempGallery = testimonial;
     return !searchTerm
       ? tempGallery ?? []
       : (tempGallery ?? []).filter(
-        (item: GalleryType) => {
-          const titleMatch = (item?.title || "")
+        (item: TestimonialType) => {
+          const titleMatch = (item?.name || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
-          const descriptionMatch = typeof item?.description === "string"
-            ? item.description.toLowerCase().includes(searchTerm.toLowerCase())
-            : false;
-          return titleMatch || descriptionMatch;
+          return titleMatch;
         }
       );
-  }, [searchTerm, gallery]);
+  }, [searchTerm, testimonial]);
 
   const columns: any[] = [
     {
-      name: "Image",
-      dataIndex: "url",
-      sortable: true,
-      key: "url",
-      selector: (row: { url: string; thumb?: string }) =>
-        row?.url ? <Avatar src={row?.url} size={40} shape="square" /> : "-",
-    },
-    {
-      name: "Title",
+      name: "Name",
       width: "20%",
       dataIndex: "name",
       sortable: true,
       key: "name",
-      selector: (row: { title: string; }) =>
-        row?.title || "-",
-    },
-    {
-      name: "Description",
-      dataIndex: "description",
-      sortable: true,
-      key: "description",
-      selector: (row: { description: string; }) =>
-        row?.description || "-",
+      selector: (row: { name: string; }) =>
+        row?.name || "-",
     },
     {
       name: "Date created",
@@ -103,7 +78,7 @@ const Gallery: React.FC = () => {
       name: "Actions",
       width: "25%",
       key: "action",
-      cell: (row: any, record: GalleryType) => (
+      cell: (row: any, record: TestimonialType) => (
         <>
           <Button
             size="small"
@@ -111,43 +86,17 @@ const Gallery: React.FC = () => {
             style={{
               fontSize: 12,
             }}
-            loading={isLoading}
+            loading={loadingTestimonial}
             onClick={() => {
-              setCurrGallery(row);
+              setCurrTestimonial(row);
               showModal(row);
             }}
           >
             Edit
           </Button>
           <Divider type="vertical" />
-          <Button
-            type="default"
-            size="small"
-            loading={isLoading}
-            style={{
-              width: 130,
-              backgroundColor: row?.hideFromList ? "white" : "gray",
-              color: row?.hideFromList ? "#001529" : "white",
-              fontSize: 12,
-            }}
-            onClick={async () => {
-              setIsLoading(true);
-              await setDoc(
-                doc(db, "nodes", row?.id),
-                {
-                  hideFromList: !row?.hideFromList,
-                },
-                { merge: true }
-              );
-              await getAllGallery();
-              setIsLoading(false);
-            }}
-          >
-            {row?.hideFromList ? "Display in List" : "Remove from List"}
-          </Button>
-          <Divider type="vertical" />
           <Popconfirm
-            title="Are you sure to delete this gallery?"
+            title="Are you sure to delete this testimonial?"
             onConfirm={() => {
               handleDelete(row?.id);
             }}
@@ -162,7 +111,7 @@ const Gallery: React.FC = () => {
                 color: "#fff",
                 fontSize: 12,
               }}
-              loading={isLoading}
+              loading={loadingTestimonial}
               type="default"
             >
               Delete
@@ -174,14 +123,8 @@ const Gallery: React.FC = () => {
   ];
 
   useEffect(() => {
-    getAllGallery();
-  }, [getAllGallery]);
-
-  useEffect(() => {
-    if (currGallery?.images) {
-      setProcessedFiles(currGallery?.images);
-    }
-  }, [currGallery?.images]);
+    getAllTestimonial();
+  }, [getAllTestimonial]);
 
   const showModal = (node?: any) => {
     if (node) {
@@ -197,16 +140,16 @@ const Gallery: React.FC = () => {
     setVisible(false);
   };
 
-  const handleCreate = async (data: GalleryType) => {
+  const handleCreate = async (data: TestimonialType) => {
     try {
       setLoading(true);
-      await createGallery({
+      await createTestimonial({
         ...data,
         dateCreated: serverTimestamp(),
-      });
-      message.success("Gallery created successfully");
+      })
+      message.success("Testimonial created successfully");
       setVisible(false);
-      await getAllGallery();
+      await getAllTestimonial();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -217,9 +160,9 @@ const Gallery: React.FC = () => {
   const handleDelete = async (id: any) => {
     try {
       setLoading(true);
-      await deleteGallery(id);
-      message.success("Gallery deleted successfully");
-      await getAllGallery();
+      await deleteTestimonial(id);
+      message.success("Testimonial deleted successfully");
+      await getAllTestimonial();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
@@ -233,17 +176,16 @@ const Gallery: React.FC = () => {
       const pload = {
         ...data,
       };
-      await updateGallery(currGallery?.id ?? data.id, pload);
-      message.success("Gallery updated successfully");
+      await updateTestimonial(currTestimonial?.id ?? data.id, pload);
+      message.success("Testimonial updated successfully");
       setVisible(false);
-      await getAllGallery();
+      await getAllTestimonial();
     } catch (error) {
       message.error((error as Error).message);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <>
       <Row>
@@ -257,25 +199,25 @@ const Gallery: React.FC = () => {
             <Button
               type="primary"
               onClick={() => {
-                setCurrGallery(null);
+                setCurrTestimonial(null);
                 showModal();
               }}
               icon={<PlusOutlined />}
             >
-              New Gallery
+              New Testimonial
             </Button>
           </Space>
         </Col>
       </Row>
       <Row>
         <Col span={24}>
-          {loadingGallery ? (
+          {loadingTestimonial ? (
             <Spin size="large" className="spinner" />
           ) : (
             <DataTable
-              title="Gallery"
+              title="Testimonials"
               columns={columns}
-              data={filteredProducts}
+              data={filteredTestimonials}
               progressPending={loading}
               noHeader
               pagination
@@ -283,19 +225,17 @@ const Gallery: React.FC = () => {
           )}
         </Col>
       </Row>
-      <GalleryForm
+      <TestimonialForm
         form={form}
         visible={visible}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
         onCancel={handleCancel}
-        defaultImages={currGallery?.url}
-        currImages={processedFiles}
-        isNew={!currGallery?.id}
-        galleryId={currGallery?.id ?? uuidv4()}
+        isNew={!currTestimonial?.id}
+        testimonialId={currTestimonial?.id ?? uuidv4()}
       />
     </>
   );
 };
 
-export default Gallery;
+export default TestimonialTable;

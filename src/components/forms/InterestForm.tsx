@@ -5,16 +5,13 @@ import {
   Input,
   Upload,
   message,
-  UploadFile,
-  Button,
-  Select
+  Button
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "../../firebase/config";
-import { extractFileNameFromUrl } from "../../helpers/common";
 
-interface GalleryFormProps {
+interface InterestFormProps {
   form: any;
   isNew: boolean;
   visible: boolean;
@@ -22,52 +19,40 @@ interface GalleryFormProps {
   onUpdate: (values: Event) => void;
   onCancel: () => void;
   defaultImages?: string;
-  currImages?: string[];
+  currImage?: string;
   nodeId?: string;
-  galleryId?: string;
+  interestId?: string;
 }
 
-export const GalleryForm: React.FC<GalleryFormProps> = ({
+export const InterestForm: React.FC<InterestFormProps> = ({
   form,
   isNew,
   visible,
   onCreate,
   onUpdate,
   onCancel,
-  currImages,
+  currImage,
   defaultImages,
-  galleryId,
+  nodeId,
+  interestId,
 }) => {
   const [url, setUrl] = useState<string | undefined>(undefined);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (currImages?.length) {
-      setFileList([
-        {
-          uid: "1",
-          name: extractFileNameFromUrl(currImages[0]),
-          status: "done",
-          url: currImages[0],
-        },
-      ]);
+    if (currImage?.length) {
+      setUrl(currImage);
+    } else if (defaultImages?.length) {
+      setUrl(defaultImages); // fallback to default
     } else {
-      setFileList([]);
+      setUrl(''); // empty if none
     }
-  }, [currImages]);
+  }, [currImage, defaultImages]);
 
-  useEffect(() => {
-    if (defaultImages?.length) {
-      setUrl(defaultImages);
-    } else {
-      setUrl('');
-    }
-  }, [defaultImages]);
 
   const uploadImage = async (file: File) => {
-    const fileRef = ref(storage, `galleries/${galleryId}/images/${file.name}`);
+    const fileRef = ref(storage, `interest/${interestId}/images/${file.name}`);
     const snapshot = await uploadBytes(fileRef, file);
     const url = await getDownloadURL(snapshot.ref);
     return url;
@@ -114,13 +99,12 @@ export const GalleryForm: React.FC<GalleryFormProps> = ({
           const process = !isNew ? onUpdate : onCreate;
           const payload = {
             ...values,
-            url,
-            id: galleryId
+            imageUrl: url,
+            id: interestId
           };
           await process(payload);
           form.resetFields();
           setUrl(undefined);
-          setFileList([]);
           setLoading(false);
         }).catch(() => setLoading(false));
       }}
@@ -137,95 +121,49 @@ export const GalleryForm: React.FC<GalleryFormProps> = ({
                 marginBottom: 12,
               }}
             >
-              <>
-                <img
-                  src={url}
-                  alt="Preview"
-                  style={{ width: 80, height: "auto", marginBottom: 8, borderRadius: 4 }}
-                />
-                <Button type="link" danger onClick={handleImageRemove}>
-                  Remove Image
-                </Button>
-              </>
+              <img
+                src={url}
+                alt="Preview"
+                style={{ width: 80, height: "auto", marginBottom: 8, borderRadius: 4 }}
+              />
+              <Button type="link" danger onClick={handleImageRemove}>
+                Remove Image
+              </Button>
             </div>
-          ) :
+          ) : (
             <Upload
               accept=".jpg,.jpeg,.png"
               listType="picture-card"
               showUploadList={false}
-              fileList={fileList}
-
+              maxCount={1} // ✅ allow only 1 file
               beforeUpload={(file) => {
                 const isJpgOrPng =
                   file.type === "image/jpeg" || file.type === "image/png";
                 if (!isJpgOrPng) {
                   message.error("You can only upload JPG/PNG file!");
-                  return false;
+                  return Upload.LIST_IGNORE;
                 }
                 const isLt2M = file.size / 1024 / 1024 < 2;
                 if (!isLt2M) {
-                  message.error("Image must smaller than 2MB!");
-                  return false;
+                  message.error("Image must be smaller than 2MB!");
+                  return Upload.LIST_IGNORE;
                 }
                 handleImageUpload(file);
-                return false;
+                return false; // ✅ prevent auto upload
               }}
             >
-              {fileList.length >= 1 ? null : (
-                <Button
-                  icon={<PlusOutlined />}
-                  size="small"
-                  loading={uploadingImage}
-                >
-                  {uploadingImage ? "Uploading..." : "Upload"}
-                </Button>
-              )}
+              <Button
+                icon={<PlusOutlined />}
+                size="small"
+                loading={uploadingImage}
+              >
+                {uploadingImage ? "Uploading..." : "Upload"}
+              </Button>
             </Upload>
-          }
-
+          )}
         </Form.Item>
 
         <Form.Item name="title" label="Title" rules={[{ required: true, message: "Please enter Title" }]}>
-          <Input />
-        </Form.Item>
-
-        {/* Duration */}
-        <Form.Item
-          name="duration"
-          label="Duration"
-          rules={[{ required: true, message: "Please enter duration" }]}
-        >
-          <Input placeholder="e.g. 10 dagen" />
-        </Form.Item>
-
-        {/* Price */}
-        <Form.Item
-          name="price"
-          label="Price"
-          rules={[{ required: true, message: "Please enter price" }]}
-        >
-          <Input placeholder="e.g. vanaf R15000" />
-        </Form.Item>
-
-        <Form.Item
-          name="tags"
-          label="Tags"
-          rules={[{ required: true, message: "Please select at least one tag" }]}
-        >
-          <Select
-            mode="multiple"
-            allowClear
-            placeholder="Select tags"
-            options={[
-              { value: "natuur", label: "Natuur" },
-              { value: "cultuur", label: "Cultuur" },
-              { value: "avontuur", label: "Avontuur" },
-              { value: "strand", label: "Strand" },
-              { value: "geschiedenis", label: "Geschiedenis" },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item name="description" label="Description" rules={[{ required: true, message: "Please enter Description" }]}>
           <Input />
         </Form.Item>
       </Form>

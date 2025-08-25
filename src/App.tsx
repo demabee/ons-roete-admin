@@ -30,6 +30,7 @@ import Maps from "./pages/Maps";
 import Nodes from "./pages/Nodes";
 import Gallery from './pages/Gallery';
 import Destination from './pages/Destination';
+import Homepage from './pages/Homepage';
 
 const { Content, Footer, Sider } = Layout;
 
@@ -71,6 +72,9 @@ function App() {
             defaultSelectedKeys={["/"]}
             mode="inline"
           >
+            <Menu.Item key="/" icon={<MdShop />}>
+              <NavLink to="/">Homepage</NavLink>
+            </Menu.Item>
             <Menu.Item key="/nodes" icon={<MdShop />}>
               <NavLink to="/nodes">Nodes</NavLink>
             </Menu.Item>
@@ -101,7 +105,11 @@ function App() {
           <Content style={{ padding: "0 50px" }}>
             <div
               className="site-layout-content"
-              style={{ background: colorBgContainer, margin: "40px 0 0 0" }}
+              style={{
+                background:
+                  location.pathname === "/" ? "transparent" : colorBgContainer,
+                margin: "40px 0 0 0",
+              }}
             >
               <Outlet />
             </div>
@@ -132,7 +140,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<PrivateRoute />}>
-          <Route path="/" element={<Nodes />} />
+          <Route path="/" element={<Homepage />} />
           <Route path="/nodes" element={<Nodes />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/destination" element={<Destination />} />

@@ -1,10 +1,8 @@
 import { FieldValue, Timestamp } from 'firebase/firestore';
 
-export type GalleryType = {
+export type TestimonialType = {
   id: string;
-  title: string;
-  description?: string;
+  name: string;
+  description: string;
   dateCreated?: Timestamp | FieldValue;
-  url?: string;
-  images?: string[];
 }
