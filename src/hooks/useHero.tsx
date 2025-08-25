@@ -14,8 +14,10 @@ export interface HeroType {
   id: string;
   videoUrl?: string;
   heroTitle?: string;
+  heroSubtitle?: string;
   heroDescription?: string;
-  quote?: string;
+  quote?: string
+  descriptionHighlight?: string;
 }
 
 export default function useHero() {

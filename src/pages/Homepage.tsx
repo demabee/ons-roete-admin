@@ -26,6 +26,7 @@ const Homepage = () => {
   const [uploading, setUploading] = useState(false);
 
   const handleSave = async (values: any) => {
+    console.log("Form Values:", values);
     try {
       let videoUrl = data?.videoUrl || "";
 
@@ -43,6 +44,7 @@ const Homepage = () => {
         heroDescription: values.heroDescription,
         quote: values.quote,
       };
+      console.log("Payload:", payload);
 
       await createOrUpdate(data?.id || null, payload);
       message.success("Hero section saved successfully!");
@@ -57,7 +59,6 @@ const Homepage = () => {
       const heroData = await getHero();
       if (heroData) {
         form.setFieldsValue({
-          videoUrl: heroData.videoUrl || [],
           heroTitle: heroData.heroTitle || "",
           heroDescription: heroData.heroDescription || "",
           quote: heroData.quote || "",
@@ -108,11 +109,18 @@ const Homepage = () => {
               <Form.Item label="Title" name="heroTitle" initialValue="Zuid-Afrika">
                 <Input />
               </Form.Item>
+              <Form.Item label="Subtitle" name="heroSubtitle" initialValue="">
+                <Input />
+              </Form.Item>
               <Form.Item
                 label="Description"
                 name="heroDescription"
                 initialValue="Vind jouw volgende bestemming op gevoel en interesse"
               >
+                <TextArea rows={3} />
+              </Form.Item>
+
+              <Form.Item label="Description Highlight" name="descriptionHighlight" initialValue="">
                 <TextArea rows={3} />
               </Form.Item>
 
