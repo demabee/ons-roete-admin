@@ -15,7 +15,7 @@ import { storage } from "../../firebase/config";
 import { checkFileSize, extractFileNameFromUrl, validateFileType } from "../../helpers/common";
 import useNodes from "../../hooks/useNodes";
 import { resizeFile } from '../../helpers/resizer';
-import { META_INFO_OPTIONS } from '../../constants/select';
+import useInterest from '../../hooks/useInterest';
 
 interface DestinationFormProps {
   form: any;
@@ -48,22 +48,19 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const { data: nodesData, getAll: fetchAllNodes } = useNodes();
+  const {
+    data: interest,
+    getAll: getAllInterest,
+    loading: loadingInterest
+  } = useInterest();
 
   useEffect(() => {
     fetchAllNodes();
-  }, [fetchAllNodes]);
+    getAllInterest();
+  }, [fetchAllNodes, getAllInterest]);
 
   useEffect(() => {
     if (currImages?.length) {
-      // setFileList([
-      //   {
-      //     uid: "1",
-      //     name: extractFileNameFromUrl(currImages[0]),
-      //     status: "done",
-      //     url: currImages[0],
-      //   },
-      // ]);
-
       setFileList(
         currImages.map((c, i) => ({
           uid: i.toString(),
@@ -77,7 +74,6 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
     }
   }, [currImages]);
 
-  console.log(currImages);
 
   const resizeImage = async (file: any) => {
     if (!file) return [];
@@ -145,7 +141,7 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
       confirmLoading={loading}
       okButtonProps={{
         disabled:
-          loading || !fileList || fileList.length < 1,
+          loading || !fileList || fileList.length < 1 || loadingInterest,
       }}
       cancelText="Cancel"
       onCancel={() => {
@@ -289,7 +285,13 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
         </Form.Item>
 
         <Form.Item name="metaInfo" label="Meta Info">
-          <Select mode="tags" options={META_INFO_OPTIONS} placeholder="Add meta tags (e.g. accommodatie, activiteiten)" />
+          <Select
+            mode="tags"
+            options={(interest ?? []).map((item) => ({
+              value: item.id,
+              label: item.title,
+            }))}
+            placeholder="Add meta tags (e.g. accommodatie, activiteiten)" />
         </Form.Item>
 
         <Form.Item name="nodeId" label="Node">

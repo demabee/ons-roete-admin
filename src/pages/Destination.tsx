@@ -77,8 +77,8 @@ const Destination: React.FC = () => {
     {
       name: "Date Created",
       selector: (row: DestinationType) =>
-        row?.dateCreated
-          ? dayjs(row.dateCreated.toDate()).format("YYYY-MM-DD hh:mm a")
+        row?.dateCreated && typeof (row.dateCreated as any).toDate === "function"
+          ? dayjs((row.dateCreated as any).toDate()).format("YYYY-MM-DD hh:mm a")
           : "-",
       sortable: true,
       grow: 1,
@@ -115,7 +115,7 @@ const Destination: React.FC = () => {
             onClick={async () => {
               setIsLoading(true);
               await setDoc(
-                doc(db, "nodes", row?.id),
+                doc(db, "destination", row?.id),
                 {
                   hideFromList: !row?.hideFromList,
                 },
@@ -128,7 +128,7 @@ const Destination: React.FC = () => {
           </Button>
           <Divider type="vertical" />
           <Popconfirm
-            title="Are you sure to delete this node?"
+            title="Are you sure to delete this destination?"
             onConfirm={() => {
               handleDelete(row?.id);
             }}
@@ -185,19 +185,37 @@ const Destination: React.FC = () => {
   const handleCreate = async (data: DestinationType) => {
     try {
       setLoading(true);
-      await setDoc(doc(db, "destination", data.id), {
+
+      // Ensure media is always defined and clean up empty fields
+      const safeMedia = {
+        audioUrl: data.media?.audioUrl?.trim() || "",
+        ebookUrl: data.media?.ebookUrl?.trim() || "",
+      };
+
+      // Prepare safe data before saving to Firestore
+      const safeData: DestinationType = {
         ...data,
-        dateCreated: serverTimestamp(),
-      });
+        media: safeMedia,
+        images: data.images || [],
+        metaInfo: data.metaInfo || [],
+        thumb: data.thumb || "",
+        hideFromList: data.hideFromList ?? false,
+        dateCreated: serverTimestamp()
+      };
+
+      await setDoc(doc(db, "destination", data.id), safeData);
+
       message.success("Image info created successfully");
       setVisible(false);
       await getAllDestination();
     } catch (error) {
+      console.error("Error creating destination:", error);
       message.error((error as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleDelete = async (nodeId: any) => {
     try {

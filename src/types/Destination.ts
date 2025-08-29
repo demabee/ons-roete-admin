@@ -1,11 +1,11 @@
-import { Timestamp } from 'firebase/firestore';
+import { FieldValue, Timestamp } from 'firebase/firestore';
 
 export type DestinationType = {
   id: string;
   title: string;
   description?: string;
   metaInfo?: string[];
-  dateCreated?: Timestamp;
+  dateCreated?: Timestamp | FieldValue;
   images?: string[];
   url?: string;
   media?: {
