@@ -7,12 +7,11 @@ import {
   Upload,
   Button,
   message,
-  Select,
   UploadFile,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import Resizer from "react-image-file-resizer"; // Correct import
+import Resizer from "react-image-file-resizer";
 import { storage } from "../../firebase/config";
 import { checkFileSize, extractFileNameFromUrl, validateFileType } from "../../helpers/common";
 
@@ -25,6 +24,7 @@ interface EventFormProps {
   onCancel: () => void;
   defaultImages: string[];
   currImages: string[];
+  mapImage?: string;
   thumb?: string[];
   nodeId?: string | undefined;
 }
@@ -37,32 +37,45 @@ export const ProductForm: React.FC<EventFormProps> = ({
   onUpdate,
   onCancel,
   currImages,
+  mapImage,
   defaultImages,
   nodeId,
 }) => {
   const [urls, setUrls] = useState<string[]>(["", "", ""]);
-  const [fileList, setFileList] = useState<
-    | UploadFile<any>[]
-    | { uid: number; name: string; status: string; url: string }[]
-  >([]);
-  // const [xs, setXSmall] = useState<string[]>(["", "", ""]);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [mapImgFile, setMapImgFile] = useState<UploadFile[]>([]); // 🆕 for mapImg
+
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingMapImg, setUploadingMapImg] = useState(false); // 🆕
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (currImages) {
       setFileList(
         currImages.map((c, i) => ({
-          uid: i,
+          uid: i.toString(),
           name: extractFileNameFromUrl(c),
           status: "done",
           url: c,
         }))
-      ); // Set the state with the UploadFile objects
+      );
     } else {
       setFileList([]);
     }
-  }, [currImages]);
+
+    if (mapImage) {
+      setMapImgFile([
+        {
+          uid: "-1",
+          name: extractFileNameFromUrl(mapImage),
+          status: "done",
+          url: mapImage,
+        },
+      ]);
+    } else {
+      setMapImgFile([]);
+    }
+  }, [currImages, mapImage]);
 
   useEffect(() => {
     if (defaultImages) {
@@ -82,7 +95,6 @@ export const ProductForm: React.FC<EventFormProps> = ({
         80,
         0,
         (uri) => {
-          console.log(uri);
           resolve(uri);
         },
         "file"
@@ -100,17 +112,11 @@ export const ProductForm: React.FC<EventFormProps> = ({
   };
 
   const uploadImage = async (file: any, index: number) => {
-    // const storageRef = storage.ref();
-    // const imageRef = storageRef.child(`images/${file.name}`);
-    // await imageRef.put(file);
-    // return await imageRef.getDownloadURL();
     const snapshot = await uploadBytes(
       ref(storage, `nodes/${nodeId}/images/${index}/${file.name}`),
       file
     );
     const url = await getDownloadURL(ref(storage, snapshot.ref.fullPath));
-    console.log(url);
-
     return url;
   };
 
@@ -119,12 +125,6 @@ export const ProductForm: React.FC<EventFormProps> = ({
       setUploadingImage(true);
       const resizedImages = await resizeImage(file);
       const urls = await Promise.all(resizedImages.map(uploadImage));
-      // const snapshot = await uploadBytes(
-      //   ref(storage, `nodes/${nodeId}/images/${file.name}`),
-      //   file
-      // );
-      // const url = await getDownloadURL(ref(storage, snapshot.ref.fullPath));
-      // await saveImageUrlsToFirestore(urls);
       setUrls(urls);
       setUploadingImage(false);
       message.success(`${file.name} uploaded successfully`);
@@ -135,28 +135,36 @@ export const ProductForm: React.FC<EventFormProps> = ({
     }
   };
 
+  const handleMapImgUpload = async (file: UploadFile) => { // 🆕
+    try {
+      setUploadingMapImg(true);
+      const snapshot = await uploadBytes(
+        ref(storage, `nodes/${nodeId}/map/${file.name}`),
+        file as any
+      );
+      const url = await getDownloadURL(ref(storage, snapshot.ref.fullPath));
+      setUploadingMapImg(false);
+      message.success(`${file.name} uploaded successfully`);
+      return url;
+    } catch (error) {
+      setUploadingMapImg(false);
+      message.error((error as Error).message);
+      return "";
+    }
+  };
+
   const uploadImagesAndStoreInFirestore = async (files: string | any[]) => {
     const imageUrls = [];
-
     for (let index = 0; index < files.length; index++) {
       const file = files[index];
-
       const snapshot = await uploadBytes(
         ref(storage, `nodes/${nodeId}/images/${index}/${file.name}`),
         file
       );
-
       const url = await getDownloadURL(ref(storage, snapshot.ref.fullPath));
       imageUrls.push(url);
     }
-
-    try {
-      console.log("Images uploaded and stored in Firestore:", imageUrls);
-      return imageUrls;
-    } catch (error) {
-      console.error("Error uploading images to Firestore:", error);
-      return [];
-    }
+    return imageUrls;
   };
 
   return (
@@ -166,8 +174,7 @@ export const ProductForm: React.FC<EventFormProps> = ({
       okText={!isNew ? "Update" : "Create"}
       confirmLoading={loading}
       okButtonProps={{
-        disabled:
-          loading || !fileList || fileList.length < 1,
+        disabled: loading || !fileList || fileList.length < 1,
       }}
       cancelText="Cancel"
       onCancel={() => {
@@ -183,13 +190,16 @@ export const ProductForm: React.FC<EventFormProps> = ({
               message.error("No uploaded images!");
               return;
             }
+
+            // Upload map image if selected 🆕
+            let mapImgUrl = "";
+            if (mapImgFile.length > 0) {
+              mapImgUrl = await handleMapImgUpload(mapImgFile[0]);
+            }
+
             const process = !isNew ? onUpdate : onCreate;
             let images = [];
             let currUrls: any = [];
-            if (!fileList || fileList.length <= 0) {
-              message.error("No uploaded images!");
-              return;
-            }
             if (!isNew) {
               const filteredFileList = ((fileList as any[]) ?? []).filter(
                 (f: { status: string }) => f?.status !== "done"
@@ -219,6 +229,7 @@ export const ProductForm: React.FC<EventFormProps> = ({
               highres: currUrls[2] || "",
               id: nodeId,
               images,
+              mapImg: mapImgUrl, // 🆕 include map image in payload
             };
             try {
               const res = await process(pload);
@@ -235,6 +246,7 @@ export const ProductForm: React.FC<EventFormProps> = ({
           .finally(() => {
             setLoading(false);
             setFileList([]);
+            setMapImgFile([]); // 🆕 reset mapImg after submit
           });
       }}
     >
@@ -247,55 +259,38 @@ export const ProductForm: React.FC<EventFormProps> = ({
         }}
         layout="vertical"
       >
+        {/* Existing Upload */}
         <Form.Item
           style={{ textAlign: "center" }}
           label="Upload Images (first image will be your cover image)"
         >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-          </div>
           <Upload
-            accept=".jpg,.jpeg,.png,.gif"
+            accept=".jpg,.jpeg,.png,.gif,.webp" // 🆕 allow webp
             showUploadList={true}
             multiple
-            fileList={fileList as UploadFile[]}
+            fileList={fileList}
             beforeUpload={(file: UploadFile) => {
-              const acceptedTypes = ["image/png", "image/jpeg"];
+              const acceptedTypes = ["image/png", "image/jpeg", "image/webp"]; // 🆕
               const isAllowedType = validateFileType(file, acceptedTypes);
               const isFileSizeEnough = checkFileSize(file);
               if (!isAllowedType) {
-                setFileList((state) => [...state] as UploadFile[]);
-                message.error(`${file.name} is not PNG/JPG file`);
+                message.error(`${file.name} is not PNG/JPG/WEBP file`);
                 return false;
               }
               if (!isFileSizeEnough) {
-                setFileList((state) => [...state] as UploadFile[]);
                 message.error("Image must be smaller than 2MB!");
                 return false;
               }
-              setFileList((state) => [...state, file] as UploadFile[]);
+              setFileList((state) => [...state, file]);
               return false;
             }}
             onRemove={(file: UploadFile) => {
-              if (fileList.some((item: any) => item.uid === file.uid)) {
-                setFileList((fileList) =>
-                  ((fileList as UploadFile[]) ?? []).filter(
-                    (item: any) => item.uid !== file.uid
-                  )
-                );
-                return true;
-              }
-              return false;
+              setFileList((fileList) =>
+                fileList.filter((item) => item.uid !== file.uid)
+              );
+              return true;
             }}
             listType="picture-circle"
-          // beforeUpload={() => false}
           >
             <Button
               size="small"
@@ -306,39 +301,75 @@ export const ProductForm: React.FC<EventFormProps> = ({
             </Button>
           </Upload>
         </Form.Item>
+
+        {/* 🆕 Map Image Upload */}
+        <Form.Item
+          style={{ textAlign: "center" }}
+          label="Upload Map Image"
+        >
+          <Upload
+            accept=".jpg,.jpeg,.png,.gif,.webp" // 🆕 allow webp
+            showUploadList={true}
+            maxCount={1} // 🆕 only one image
+            fileList={mapImgFile}
+            beforeUpload={(file: UploadFile) => {
+              const acceptedTypes = ["image/png", "image/jpeg", "image/webp"];
+              const isAllowedType = validateFileType(file, acceptedTypes);
+              const isFileSizeEnough = checkFileSize(file);
+              if (!isAllowedType) {
+                message.error(`${file.name} is not PNG/JPG/WEBP file`);
+                return false;
+              }
+              if (!isFileSizeEnough) {
+                message.error("Image must be smaller than 2MB!");
+                return false;
+              }
+              setMapImgFile([file]); // 🆕 replace existing file
+              return false;
+            }}
+            onRemove={(file: UploadFile) => {
+              setMapImgFile([]);
+              return true;
+            }}
+            listType="picture-card"
+          >
+            {!mapImgFile.length && (
+              <Button
+                size="small"
+                icon={<PlusOutlined />}
+                loading={uploadingMapImg}
+              >
+                Map Image
+              </Button>
+            )}
+          </Upload>
+        </Form.Item>
+
         <Form.Item
           name="name"
           label="Title"
-          rules={[
-            { required: true, message: "Please enter Title" },
-          ]}
+          rules={[{ required: true, message: "Please enter Title" }]}
         >
           <Input />
         </Form.Item>
         <Form.Item
           name="subtitle"
           label="Subtitle"
-          rules={[
-            { required: true, message: "Please enter Subtitle" },
-          ]}
+          rules={[{ required: true, message: "Please enter Subtitle" }]}
         >
           <Input />
         </Form.Item>
         <Form.Item
           name="description"
           label="Description"
-          rules={[
-            { required: true, message: "Please enter Description" },
-          ]}
+          rules={[{ required: true, message: "Please enter Description" }]}
         >
           <Input />
         </Form.Item>
         <Form.Item
           name="url"
           label="URL Endpoint"
-          rules={[
-            { required: true, message: "Please enter URL Endpoint" },
-          ]}
+          rules={[{ required: true, message: "Please enter URL Endpoint" }]}
         >
           <Input />
         </Form.Item>

@@ -40,6 +40,7 @@ interface Node {
   images?: string[];
   medium?: string;
   highres?: string;
+  mapImg?: string;
 }
 const Nodes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +49,7 @@ const Nodes: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [processedFiles, setProcessedFiles] = useState<any[]>([]);
+  const [processedMapFile, setMapProcessedFile] = useState<string>('');
   const [form] = useForm();
   const {
     data: nodes,
@@ -80,6 +82,19 @@ const Nodes: React.FC = () => {
       key: "url",
       selector: (row: { url: string; thumb?: string }) =>
         row?.thumb ? <Avatar src={row?.thumb} size={40} shape="square" /> : "-",
+    },
+    {
+      name: "Map Image", // 🆕 Added column for map image
+      width: "12%",
+      dataIndex: "mapImg",
+      sortable: false,
+      key: "mapImg",
+      selector: (row: { mapImg?: string }) =>
+        row?.mapImg ? (
+          <Avatar src={row.mapImg} size={40} shape="square" />
+        ) : (
+          "-"
+        ),
     },
     {
       name: "Title",
@@ -132,6 +147,8 @@ const Nodes: React.FC = () => {
             loading={isLoading}
             onClick={() => {
               setCurrProduct(row);
+              setProcessedFiles(row?.images || []);
+              setMapProcessedFile(row?.mapImg || '');
               showModal(row);
             }}
           >
@@ -199,7 +216,11 @@ const Nodes: React.FC = () => {
     if (currProduct?.images) {
       setProcessedFiles(currProduct?.images);
     }
-  }, [currProduct?.images]);
+    if (currProduct?.mapImg) {
+      setMapProcessedFile(currProduct.mapImg);
+    }
+  }, [currProduct?.images, currProduct?.mapImg]);
+
 
   const showModal = (node?: any) => {
     if (node) {
@@ -331,6 +352,7 @@ const Nodes: React.FC = () => {
           currProduct?.highres ?? "",
         ]}
         currImages={processedFiles}
+        mapImage={processedMapFile}
         isNew={!currProduct?.id}
         nodeId={currProduct?.id ?? uuidv4()}
       />
