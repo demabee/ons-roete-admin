@@ -133,6 +133,7 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
       return [];
     }
   };
+
   return (
     <Modal
       open={visible}

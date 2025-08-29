@@ -3,10 +3,10 @@ import {
   collection,
   getDocs,
   getDoc,
-  addDoc,
   updateDoc,
   deleteDoc,
-  doc
+  doc,
+  setDoc
 } from 'firebase/firestore';
 import { useCallback, useState } from 'react';
 import { db } from '../firebase/config';
@@ -46,11 +46,17 @@ export default function useGallery() {
     }
   }, []);
 
-  const create = useCallback(async (payload: Omit<GalleryType, 'id'>) => {
+  const create = useCallback(async (payload: GalleryType) => {
     setLoading(true);
     try {
-      const docRef = await addDoc(galleryRef, payload);
-      return docRef.id;
+      const docRef = doc(galleryRef, payload.id);
+      const newPayload = { ...payload };
+      await setDoc(docRef, newPayload);
+      console.log("✅ Gallery created successfully:", newPayload);
+      return payload.id;
+    } catch (error) {
+      console.error("❌ Error creating gallery:", error);
+      throw error;
     } finally {
       setLoading(false);
     }

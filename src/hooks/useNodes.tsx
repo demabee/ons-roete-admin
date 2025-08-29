@@ -3,10 +3,10 @@ import {
   collection,
   getDocs,
   getDoc,
-  addDoc,
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
 } from 'firebase/firestore';
 import { useCallback, useState } from 'react';
 import { db } from '../firebase/config';
@@ -51,11 +51,17 @@ export default function useNodes() {
     }
   }, []);
 
-  const create = useCallback(async (payload: Omit<NodeType, 'id'>) => {
+  const create = useCallback(async (payload: NodeType) => {
     setLoading(true);
     try {
-      const docRef = await addDoc(nodesRef, payload);
-      return docRef.id;
+      const docRef = doc(nodesRef, payload.id);
+      const newPayload = { ...payload };
+      await setDoc(docRef, newPayload);
+      console.log("✅ Node created successfully:", newPayload);
+      return payload.id;
+    } catch (error) {
+      console.error("❌ Error creating node:", error);
+      throw error;
     } finally {
       setLoading(false);
     }

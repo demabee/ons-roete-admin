@@ -3,10 +3,10 @@ import {
   collection,
   getDocs,
   getDoc,
-  addDoc,
   updateDoc,
   deleteDoc,
-  doc
+  doc,
+  setDoc
 } from 'firebase/firestore';
 import { useCallback, useState } from 'react';
 import { db } from '../firebase/config';
@@ -46,11 +46,17 @@ export default function useTestimonials() {
     }
   }, []);
 
-  const create = useCallback(async (payload: Omit<TestimonialType, 'id'>) => {
+  const create = useCallback(async (payload: TestimonialType) => {
     setLoading(true);
     try {
-      const docRef = await addDoc(interestRef, payload);
-      return docRef.id;
+      const docRef = doc(interestRef, payload.id);
+      const newPayload = { ...payload };
+      await setDoc(docRef, newPayload);
+      console.log("✅ Testimonial created successfully:", newPayload);
+      return payload.id;
+    } catch (error) {
+      console.error("❌ Error creating testimonial:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
