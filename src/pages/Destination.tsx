@@ -96,6 +96,7 @@ const Destination: React.FC = () => {
             loading={isLoading}
             onClick={() => {
               showModal(row);
+              setCurrDestination(row);
             }}
           >
             Edit
@@ -160,7 +161,7 @@ const Destination: React.FC = () => {
   useEffect(() => {
     getAllDestination();
   }, [getAllDestination]);
-
+  console.log('currDestination', currDestination);
   useEffect(() => {
     if (currDestination?.images) {
       setProcessedFiles(currDestination?.images);

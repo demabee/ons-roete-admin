@@ -55,18 +55,29 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
 
   useEffect(() => {
     if (currImages?.length) {
-      setFileList([
-        {
-          uid: "1",
-          name: extractFileNameFromUrl(currImages[0]),
+      // setFileList([
+      //   {
+      //     uid: "1",
+      //     name: extractFileNameFromUrl(currImages[0]),
+      //     status: "done",
+      //     url: currImages[0],
+      //   },
+      // ]);
+
+      setFileList(
+        currImages.map((c, i) => ({
+          uid: i.toString(),
+          name: extractFileNameFromUrl(c),
           status: "done",
-          url: currImages[0],
-        },
-      ]);
+          url: c,
+        }))
+      );
     } else {
       setFileList([]);
     }
   }, [currImages]);
+
+  console.log(currImages);
 
   const resizeImage = async (file: any) => {
     if (!file) return [];
