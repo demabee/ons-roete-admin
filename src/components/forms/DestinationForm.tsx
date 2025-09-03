@@ -142,7 +142,7 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
       confirmLoading={loading}
       okButtonProps={{
         disabled:
-          loading || !fileList || fileList.length < 1 || loadingInterest,
+          loading || loadingInterest,
       }}
       cancelText="Cancel"
       onCancel={() => {
@@ -153,38 +153,30 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
         try {
           const values = await form.validateFields();
           setLoading(true);
-          if (!fileList || fileList.length < 1) {
-            message.error("No uploaded images!");
-            return;
-          }
-          const process = !isNew ? onUpdate : onCreate;
-          let images = [];
-          let currUrls: any = [];
-          if (!fileList || fileList.length <= 0) {
-            message.error("No uploaded images!");
-            return;
-          }
-          if (!isNew) {
-            const filteredFileList = ((fileList as any[]) ?? []).filter(
-              (f: { status: string }) => f?.status !== "done"
-            );
-            const filteredFileUpload = ((fileList as any[]) ?? [])
-              .filter((f: { status: string }) => f?.status === "done")
-              .map((f) => f?.url);
 
-            currUrls =
-              fileList[0]?.status === "done"
-                ? urls
-                : await handleImageUpload(fileList[0] as UploadFile);
-            images = await uploadImagesAndStoreInFirestore(filteredFileList);
-            images = [...filteredFileUpload, ...images];
-          } else {
-            currUrls = await handleImageUpload(fileList[0] as UploadFile);
-            images = await uploadImagesAndStoreInFirestore(fileList);
-          }
-          if (!currUrls) {
-            message.error("No uploaded images!");
-            return;
+          const process = !isNew ? onUpdate : onCreate;
+          let images: string[] = [];
+          let currUrls: string[] = ["", "", ""]; // ✅ Default empty
+
+          if (fileList && fileList.length > 0) {
+            if (!isNew) {
+              const filteredFileList = ((fileList as any[]) ?? []).filter(
+                (f: { status: string }) => f?.status !== "done"
+              );
+              const filteredFileUpload = ((fileList as any[]) ?? [])
+                .filter((f: { status: string }) => f?.status === "done")
+                .map((f) => f?.url);
+
+              currUrls =
+                fileList[0]?.status === "done"
+                  ? urls
+                  : (await handleImageUpload(fileList[0] as UploadFile)) ?? [];
+              images = await uploadImagesAndStoreInFirestore(filteredFileList);
+              images = [...filteredFileUpload, ...images];
+            } else {
+              currUrls = (await handleImageUpload(fileList[0] as UploadFile)) ?? [];
+              images = await uploadImagesAndStoreInFirestore(fileList);
+            }
           }
 
           const payload = {
@@ -212,7 +204,7 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
       }}
     >
       <Form form={form} layout="vertical">
-        <Form.Item label="Upload Image" required>
+        <Form.Item label="Upload Image">
           <div
             style={{
               display: "flex",
@@ -233,12 +225,10 @@ export const DestinationForm: React.FC<DestinationFormProps> = ({
               const isAllowedType = validateFileType(file, acceptedTypes);
               const isFileSizeEnough = checkFileSize(file);
               if (!isAllowedType) {
-                setFileList((state) => [...state] as UploadFile[]);
                 message.error(`${file.name} is not PNG/JPG file`);
                 return false;
               }
               if (!isFileSizeEnough) {
-                setFileList((state) => [...state] as UploadFile[]);
                 message.error("Image must be smaller than 2MB!");
                 return false;
               }
